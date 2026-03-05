@@ -18,11 +18,13 @@ class TmuxManager:
 
     @staticmethod
     def create_session(session_name: str, project_path: str) -> None:
-        """创建 tmux session"""
+        """创建 tmux session（确保 uucp 组权限用于串口访问）"""
         if not TmuxManager.session_exists(session_name):
+            # 使用 sg uucp 启动 session，确保串口权限
             subprocess.run([
                 "tmux", "new-session", "-d", "-s", session_name,
-                "-c", project_path
+                "-c", project_path,
+                "sg", "uucp", "-c", "zsh"
             ], check=True)
 
     @staticmethod
