@@ -1,6 +1,7 @@
 """任务管理器 - 管理异步构建/烧录任务"""
 import json
 import subprocess
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, Optional
@@ -36,8 +37,9 @@ class TaskManager:
         # 创建或复用 tmux session
         self.tmux.create_session(self.session_name, str(self.project_path))
 
-        # 退出可能存在的 monitor
+        # 退出可能存在的 monitor（Ctrl+]），等待退出完成
         self.tmux.send_ctrl_bracket(self.session_name)
+        time.sleep(2)
 
         # 构建命令
         cmd = "conda activate idf55 && source /opt/esp-idf/export.sh && "
@@ -69,6 +71,7 @@ class TaskManager:
         task_id = self._get_task_id()
         self.tmux.create_session(self.session_name, str(self.project_path))
         self.tmux.send_ctrl_bracket(self.session_name)
+        time.sleep(2)
 
         cmd = f"conda activate idf55 && source /opt/esp-idf/export.sh && idf.py {operation}"
         self.tmux.send_keys(self.session_name, cmd)
