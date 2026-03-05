@@ -56,9 +56,31 @@ class TaskManager:
             "log_file": str(self._get_log_path(task_id, "build_flash_monitor"))
         }
 
-    def get_current_output(self) -> str:
+    def get_current_output(self, lines: int = 80) -> str:
         """获取当前 tmux 输出"""
-        return self._capture_tmux_output()
+        result = subprocess.run(
+            ["tmux", "capture-pane", "-t", self.session_name, "-p", "-S", f"-{lines}"],
+            capture_output=True, text=True
+        )
+        return result.stdout if result.returncode == 0 else ""
+
+    def start_operation(self, operation: str) -> Dict:
+        """启动单个操作（build/flash/monitor/fullclean）"""
+        task_id = self._get_task_id()
+        self.tmux.create_session(self.session_name, str(self.project_path))
+        self.tmux.send_ctrl_bracket(self.session_name)
+
+        cmd = f"conda activate idf55 && source /opt/esp-idf/export.sh && idf.py {operation}"
+        self.tmux.send_keys(self.session_name, cmd)
+
+        return {
+            "task_id": task_id,
+            "status": "running",
+            "operation": operation,
+            "project": str(self.project_path),
+            "tmux_session": self.session_name,
+            "log_file": str(self._get_log_path(task_id, operation))
+        }
 
     def save_log(self, task_id: str, operation: str, content: str, summary: Dict):
         """保存日志和摘要"""
