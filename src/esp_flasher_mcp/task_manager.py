@@ -39,11 +39,12 @@ class TaskManager:
         # 退出可能存在的 monitor
         self.tmux.send_ctrl_bracket(self.session_name)
 
-        # 构建命令
-        cmd = "conda activate idf55 && source /opt/esp-idf/export.sh && "
+        # 构建命令（sg uucp 确保串口权限）
+        inner = ""
         if clean:
-            cmd += "idf.py fullclean && "
-        cmd += "idf.py build && idf.py flash monitor"
+            inner += "idf.py fullclean && "
+        inner += "idf.py build && idf.py flash monitor"
+        cmd = f"conda activate idf55 && source /opt/esp-idf/export.sh && sg uucp -c '{inner}'"
 
         # 发送命令
         self.tmux.send_keys(self.session_name, cmd)
@@ -70,7 +71,7 @@ class TaskManager:
         self.tmux.create_session(self.session_name, str(self.project_path))
         self.tmux.send_ctrl_bracket(self.session_name)
 
-        cmd = f"conda activate idf55 && source /opt/esp-idf/export.sh && idf.py {operation}"
+        cmd = f"conda activate idf55 && source /opt/esp-idf/export.sh && sg uucp -c 'idf.py {operation}'"
         self.tmux.send_keys(self.session_name, cmd)
 
         return {
